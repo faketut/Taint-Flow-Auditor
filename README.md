@@ -42,12 +42,14 @@ for classifying that function as a sink.
 ## Quickstart
 
 ```bash
-# Prereq: install Orbit Local (https://gitlab.com/gitlab-org/orbit/knowledge-graph)
+# Prereq: install Orbit Local (macOS / Linux only — Windows users: use WSL2)
+# https://gitlab.com/gitlab-org/orbit/knowledge-graph
 curl -fsSL "https://gitlab.com/gitlab-org/orbit/knowledge-graph/-/raw/main/install.sh" | bash
 
 # Clone and install this tool
 git clone https://github.com/faketut/Taint-Flow-Auditor.git
 cd Taint-Flow-Auditor
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 
 # Index your repo and run the audit
@@ -55,13 +57,20 @@ orbit index .
 taint-audit scan . --output findings.sarif
 ```
 
-To try it on the bundled vulnerable demo:
+To try it on the bundled vulnerable demo (`examples/demo-app/` ships without
+its own `.git/` so Orbit needs you to initialise one first — Orbit only
+indexes directories that look like git repositories):
 
 ```bash
 cd examples/demo-app
+git init -q && git add -A && git -c user.email=demo@local -c user.name=demo commit -q -m demo
 orbit index .
 taint-audit scan . --pretty
 ```
+
+The nested `.git/` stays local — the outer repo ignores it. Expected output:
+four findings (2 HIGH, 1 MEDIUM, 1 LOW), with `cli.dump_table` correctly
+**not** flagged because it isn't a source.
 
 ## Output
 
