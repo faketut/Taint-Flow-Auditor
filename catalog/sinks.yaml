@@ -1,0 +1,91 @@
+# Dangerous sinks. A Definition is a "sink" if its body contains a call to any
+# of these patterns.
+
+calls:
+  # Command injection
+  - os.system
+  - os.popen
+  - subprocess.run
+  - subprocess.call
+  - subprocess.check_call
+  - subprocess.check_output
+  - subprocess.Popen
+  - commands.getoutput
+
+  # Code injection
+  - eval
+  - exec
+  - compile
+
+  # Deserialization
+  - pickle.load
+  - pickle.loads
+  - yaml.load          # unsafe variant; safe_load is fine
+  - marshal.loads
+  - shelve.open
+
+  # SQL — string-formatted execute paths
+  # The auditor flags these only when the argument is not a literal.
+  - cursor.execute
+  - cursor.executemany
+  - connection.execute
+  - db.execute
+  - engine.execute
+
+  # Filesystem (path traversal / arbitrary write)
+  - open
+  - shutil.copyfile
+  - shutil.move
+  - os.remove
+  - os.unlink
+
+  # SSRF
+  - requests.get
+  - requests.post
+  - requests.put
+  - requests.delete
+  - httpx.get
+  - httpx.post
+  - urllib.request.urlopen
+
+severities:
+  high:
+    - os.system
+    - os.popen
+    - subprocess.Popen
+    - subprocess.run
+    - subprocess.call
+    - subprocess.check_call
+    - subprocess.check_output
+    - eval
+    - exec
+    - pickle.load
+    - pickle.loads
+    - yaml.load
+    - marshal.loads
+    - cursor.execute
+    - cursor.executemany
+  medium:
+    - open
+    - shutil.copyfile
+    - shutil.move
+    - os.remove
+    - os.unlink
+    - urllib.request.urlopen
+    - requests.get
+    - requests.post
+    - httpx.get
+    - httpx.post
+  low: []
+
+fix_suggestions:
+  os.system: "Use subprocess.run([...], shell=False) with a list argument; never interpolate untrusted strings into a shell command."
+  subprocess.run: "Pass arguments as a list, not a string, and set shell=False. If a shell is required, sanitize with shlex.quote()."
+  subprocess.Popen: "Pass arguments as a list, not a string, and set shell=False."
+  eval: "Replace eval with ast.literal_eval for data, or a dedicated parser for code."
+  exec: "Avoid exec on untrusted input. Use a sandboxed evaluator or a domain-specific language."
+  pickle.loads: "Pickle is unsafe for untrusted data. Use json, or a schema-validated format (pydantic, msgspec)."
+  yaml.load: "Use yaml.safe_load instead of yaml.load."
+  cursor.execute: "Use a parameterised query: cursor.execute(sql, (param,)) — never f-strings or % formatting."
+  open: "Validate the path with pathlib.Path.resolve() and ensure it stays within an allow-listed base directory."
+  requests.get: "Validate the URL against an allow-list of hosts to prevent SSRF (block private IPs, link-local, metadata services)."

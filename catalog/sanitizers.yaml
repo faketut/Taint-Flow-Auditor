@@ -1,0 +1,25 @@
+# Functions whose presence on a taint path downgrades severity from
+# {high, medium} -> low. This is intentionally simple: we only check that
+# a sanitizer call appears somewhere on the path, not that the same value is
+# actually passed through it. Real dataflow is a v2 problem.
+
+calls:
+  - shlex.quote
+  - shlex.split
+  - bleach.clean
+  - bleach.linkify
+  - html.escape
+  - markupsafe.escape
+  - werkzeug.utils.secure_filename
+  - urllib.parse.quote
+  - urllib.parse.quote_plus
+  - re.escape
+
+  # Path-traversal mitigations
+  - pathlib.Path.resolve
+  - os.path.abspath
+  - os.path.realpath
+
+  # SQL parameter binding markers — handled separately by the analyzer,
+  # which only flags cursor.execute when the first arg is a non-literal
+  # string.

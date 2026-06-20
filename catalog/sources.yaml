@@ -1,0 +1,53 @@
+# Untrusted input sources. Matched against Python Definition bodies.
+# A Definition is a "source" if its body references any of these patterns,
+# OR if it is decorated by any of the decorator patterns below.
+#
+# All patterns are matched against the AST representation of attribute chains
+# (e.g. `request.args.get` -> "request.args.get").
+
+decorators:
+  # Flask / Quart / FastAPI / Django route handlers are entry points for HTTP
+  # request data. Anything they read from request-scoped objects is untrusted.
+  - app.route
+  - app.get
+  - app.post
+  - app.put
+  - app.delete
+  - app.patch
+  - blueprint.route
+  - bp.route
+  - router.get
+  - router.post
+  - router.put
+  - router.delete
+  - router.patch
+  - api.route
+
+attribute_reads:
+  # Flask / Quart
+  - flask.request.args
+  - flask.request.form
+  - flask.request.json
+  - flask.request.values
+  - flask.request.data
+  - flask.request.cookies
+  - flask.request.headers
+  - flask.request.files
+  - request.args
+  - request.form
+  - request.json
+  - request.values
+  - request.data
+  - request.cookies
+  - request.headers
+  - request.files
+
+calls:
+  # CLI / environment / stdin — also untrusted for security purposes.
+  - sys.argv
+  - input
+  - os.environ.get
+  # FastAPI / Starlette
+  - Request.query_params
+  - Request.body
+  - Request.json
