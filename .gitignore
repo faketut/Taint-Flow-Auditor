@@ -14,6 +14,12 @@ findings.sarif
 htmlcov/
 .DS_Store
 
+# Raw screen recordings live outside the repo (transcoded mp4s are committed
+# selectively). The macOS default filename includes a U+202F NARROW NO-BREAK
+# SPACE so we match by glob.
+*.mov
+Screen Recording*
+
 # Local secrets. Never commit. Use .env.example as the template.
 .env
 .env.*
